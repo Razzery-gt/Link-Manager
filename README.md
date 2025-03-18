@@ -22,6 +22,7 @@ Link Manager - это простой и удобный инструмент дл
 1.  Скачайте исполняемый файл для вашей операционной системы (Windows, Linux).
 2.  Запустите исполняемый файл.
 3.  Следуйте инструкциям на экране.
+4.  Если программа не запускается, запустите файл install.bat или install.sh для Linux.
 
 ## Использование
 
@@ -38,6 +39,7 @@ Link Manager - это простой и удобный инструмент дл
 
 karamelkafe23@gmail.com
 
+## English
 Link Manager is a simple and convenient tool for managing your links.
 
 ## Features
@@ -60,6 +62,7 @@ Link Manager is a simple and convenient tool for managing your links.
 1. Download the executable file for your operating system (Windows, Linux).
 2. Run the executable file.
 3. Follow the on-screen instructions.
+4. If the program does not start, launch install.bat or install.sh for Linux
 
 ## Usage
 
