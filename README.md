@@ -14,15 +14,15 @@ Link Manager - это простой и удобный инструмент дл
 * Проверка дубликатов ссылок
 * Экспорт списка ссылок в TXT
 * Поиск ссылок
-* Поддержка английского и русского языков
 * Open-Source проект
+
+## Что Нового
+Скоро обнавление! Глобальное! Ждите!
 
 ## Установка
 
-1.  Скачайте исполняемый файл для вашей операционной системы (Windows, Linux).
-2.  Запустите исполняемый файл.
-3.  Следуйте инструкциям на экране.
-4.  Если программа не запускается, запустите файл install.bat или install.sh для Linux.
+1.  Сначала установите зависимости. Их легко можно установить через скрипт install.bat
+2.  Запустите программу. 
 
 ## Использование
 
@@ -36,44 +36,5 @@ Link Manager - это простой и удобный инструмент дл
 
 
 ## Контакты
-
-karamelkafe23@gmail.com
-
-## English
-Link Manager is a simple and convenient tool for managing your links.
-
-## Features
-
-* Adding, editing, and deleting links
-* Opening links in a browser
-* Importing and exporting links in CSV, YAML, DOCX, TXT, JSON, XML, XLSX formats
-* Checking URL availability
-* Password protection
-* Copying URL to clipboard
-* Displaying the date the link was added
-* Checking for duplicate links
-* Exporting the list of links to TXT
-* Searching for links
-* Support for English and Russian languages
-* Open-Source project
-
-## Installation
-
-1. Download the executable file for your operating system (Windows, Linux).
-2. Run the executable file.
-3. Follow the on-screen instructions.
-4. If the program does not start, launch install.bat or install.sh for Linux
-
-## Usage
-
-1. Launch Link Manager.
-2. Enter the password if one is set.
-3. Use the menu to perform various actions.
-
-## Contribution
-
-Any contributions to the project are welcome. If you find a bug or would like to suggest a new feature, please create an issue or pull request.
-
-## Contact
 
 karamelkafe23@gmail.com
