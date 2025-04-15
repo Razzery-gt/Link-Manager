@@ -370,7 +370,7 @@ def menu_option(prompt, options):
             if choice in options:
                 return choice
             else:
-                print(Fore.RED + "Неверный ввод. Попробуйте снова.")
+                print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
         except ValueError:
             print(Fore.RED + "Неверный ввод. Введите число.")
 
@@ -391,21 +391,22 @@ if settings["password_required"]:
         print(Fore.RED + "Доступ запрещен.")
         exit()
 
-print(Fore.GREEN + "Добро пожаловать в Link Manager v2.0!")
+print(Fore.GREEN + "Добро пожаловать в Link Manager!")
+print(Fore.GREEN + "Версия: 1.5")
 
 while True:
     print("\n" + "="*30)
-    print("1. Открыть ссылку")
+    print("1. Открыть ссылку по ключу")
     print("2. Добавить/Изменить ссылку")
     print("3. Удалить ссылку")
     print("4. Переименовать ссылку")
     print("5. Показать все ссылки")
     print("6. Настройки")
-    print("7. Статистика")
-    print("8. Экспорт")
-    print("9. Импорт")
+    print("7. Статистика по использованию")
+    print("8. Экспорт ссылок")
+    print("9. Импорт ссылок")
     print("10. Проверить все ссылки")
-    print("11. Расширенный поиск")
+    print("11. Поиск ссылок")
     print("12. Выход")
 
     choice = menu_option("Выберите действие: ", range(1, 13))
@@ -537,8 +538,8 @@ while True:
         advanced_search()
 
     elif choice == 12:
-        print(Fore.GREEN + "До свидания!")
+        print(Fore.GREEN + "Выходим...")
         break
 
     else:
-        print(Fore.RED + "Неизвестная команда!")
+        print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
