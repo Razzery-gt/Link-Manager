@@ -17,22 +17,22 @@ from datetime import datetime
 from colorama import init, Fore
 import re
 
-# Инициализация библиотеки colorama
+
 init(autoreset=True)
 
-# Константы
+
 DOCUMENTS_DIR = os.path.join(os.path.expanduser("~"), "Documents", "LinkManager files")
 LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 
-# Начальные настройки
+
 default_settings = {
     "password": bcrypt.hashpw("1234".encode(), bcrypt.gensalt()).decode(),
     "password_required": False,
     "show_links": True
 }
 
-# Стандартные ссылки
+
 default_links = {
     "открыть_браузер": {
         "url": "https://example.com",
@@ -316,13 +316,13 @@ def check_all_links():
         print(f"[{current}/{total}] Проверка {key}...")
         try:
             if check_url_accessibility(url):
-                url_links[key]['status'] = "🟢 Доступна"
+                url_links[key]['status'] = " Доступна"
                 print(Fore.GREEN + "Успешно")
             else:
-                url_links[key]['status'] = "🔴 Недоступна"
+                url_links[key]['status'] = " Недоступна"
                 print(Fore.RED + "Недоступна")
         except Exception as e:
-            url_links[key]['status'] = "⚠️ Ошибка"
+            url_links[key]['status'] = " Ошибка"
             print(Fore.YELLOW + f"Ошибка: {str(e)}")
     save_links(url_links)
     print(Fore.GREEN + "Проверка завершена!")
@@ -374,7 +374,7 @@ def menu_option(prompt, options):
         except ValueError:
             print(Fore.RED + "Неверный ввод. Введите число.")
 
-# Основной цикл
+
 url_links = load_links()
 settings = load_settings()
 
@@ -505,7 +505,7 @@ while True:
 
     elif choice == 7:
         count_links(url_links)
-        accessible = sum(1 for v in url_links.values() if v['status'] == "🟢 Доступна")
+        accessible = sum(1 for v in url_links.values() if v['status'] == " Доступна")
         print(f"Доступных ссылок: {accessible}")
         print(f"Недоступных: {len(url_links) - accessible}")
 
