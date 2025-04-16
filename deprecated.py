@@ -384,7 +384,7 @@ def search_links(links, query, search_type='keyword', category_filter=None, stat
     else:
         print(Fore.RED + "Ссылки не найдены.")
 
-def menu_option(prompt, options):
+def menu_option(prompt, options)
     while True:
         try:
             choice = int(input(prompt, options):
