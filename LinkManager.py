@@ -1,3 +1,4 @@
+
 import webbrowser
 import json
 import os
@@ -18,27 +19,24 @@ from colorama import init, Fore
 import re  
 import logging  
 
-
 init(autoreset=True)
-
 
 DOCUMENTS_DIR = os.path.join(os.path.expanduser("~"), "Documents", "LinkManager files")
 LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
 
-
 logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
 
 default_settings = {
     "password": bcrypt.hashpw("1234".encode(), bcrypt.gensalt()).decode(),
     "password_required": False,
     "show_links": True,
     "log_level": "INFO",  
-    "debug_mode": False  
+    "debug_mode": False,
+    "use_regex": False,  
+    "use_validators": True  
 }
-
 
 default_links = {
     "открыть_браузер": {"url": "https://example.com", "date_added": str(datetime.now()), "category": "Общее", "description": ""},
@@ -46,6 +44,14 @@ default_links = {
     "яндекс": {"url": "https://www.yandex.ru", "date_added": str(datetime.now()), "category": "Поиск", "description": ""}
 }
 
+
+statistics = {
+    "last_import": None,
+    "last_export": None,
+    "last_opened": None,
+    "last_modified": None,
+    "last_deleted": None
+}
 
 def load_links():
     if os.path.exists(LINKS_FILENAME):
@@ -109,12 +115,30 @@ def open_browser(url):
         webbrowser.open(url)
         print(Fore.GREEN + f"Открываем: {url}")
         logging.info(f"Открыта ссылка: {url}")
+        statistics["last_opened"] = str(datetime.now())  
     except Exception as e:
         print(Fore.RED + f"Ошибка при открытии браузера: {e}")
         logging.error(f"Ошибка при открытии браузера: {e}")
 
+
+
+def is_valid_url_regex(url):
+    regex = re.compile(
+        r'^(?:http|ftp)s?://'  # Протокол
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # Домен
+        r'localhost|'  # Локальный хост
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  # Локальный IP
+        r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  # IPv6
+        r'(?::\d+)?'  # Порт
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+    return re.match(regex, url) is not None
+
 def is_valid_url(url):
-    return validators.url(url)
+    if settings["use_validators"] and not validators.url(url):
+        return False
+    if settings["use_regex"] and not is_valid_url_regex(url):
+        return False
+    return True  
 
 def check_url_accessibility(url):
     try:
@@ -176,7 +200,7 @@ def copy_to_clipboard(text):
 
 def choose_file(save=False, filetypes=(("JSON files", "*.json"), ("All files", "*.*"))):
     root = tk.Tk()
-    root.withdraw()  # Скрыть главное окно
+    root.withdraw()  
     if save:
         filepath = filedialog.asksaveasfilename(initialdir=DOCUMENTS_DIR, title="Выберите место для сохранения", filetypes=filetypes)
         if filepath:
@@ -187,7 +211,7 @@ def choose_file(save=False, filetypes=(("JSON files", "*.json"), ("All files", "
             logging.info(f"Выбран файл для импорта: {filepath}")
     return filepath
 
-# --- Функции экспорта ---
+
 def export_links(links, filename, format):
     try:
         if format == 'csv':
@@ -211,6 +235,7 @@ def export_links(links, filename, format):
 
         print(Fore.GREEN + f"Ссылки экспортированы в {filename} в формате {format.upper()}.")
         logging.info(f"Ссылки экспортированы в {filename} в формате {format.upper()}.")
+        statistics["last_export"] = str(datetime.now())  # Обновляем время последнего экспорта
 
     except Exception as e:
         print(Fore.RED + f"Ошибка при экспорте ссылок: {e}.")
@@ -322,13 +347,13 @@ def import_links(filename, format):
                 imported_count += 1
 
         save_links(url_links)
+        statistics["last_import"] = str(datetime.now())  # Обновляем время последнего импорта
         print(Fore.GREEN + f"Импортировано {imported_count} ссылок из {filename} в формате {format.upper()}. Пропущено {skipped_duplicates} дубликатов.")
         logging.info(f"Импортировано {imported_count} ссылок из {filename} в формате {format.upper()}. Пропущено {skipped_duplicates} дубликатов.")
 
     except Exception as e:
         print(Fore.RED + f"Ошибка при импорте ссылок: {e}.")
         logging.error(f"Ошибка при импорте ссылок: {e}")
-
 
 def import_from_csv(filename):
     links = {}
@@ -355,7 +380,6 @@ def import_from_csv(filename):
                 logging.warning(f"Неверное количество столбцов в строке CSV: '{row}'. Пропущено.")
     logging.info(f"Ссылки импортированы из CSV: {filename}")
     return links
-
 
 def import_from_json(filename):
     with open(filename, 'r', encoding='utf-8') as f:
@@ -531,7 +555,13 @@ def show_statistics(links):
     for category, count in category_counts.items():
         print(f"- {category}: {count}")
 
-    # Ждите дополнительной статистики
+    # Показать время последних действий
+    print(Fore.YELLOW + "\nПоследние действия:")
+    print(f"- Последний импорт: {statistics['last_import']}")
+    print(f"- Последний экспорт: {statistics['last_export']}")
+    print(f"- Последнее открытие: {statistics['last_opened']}")
+    print(f"- Последнее изменение: {statistics['last_modified']}")
+    print(f"- Последнее удаление: {statistics['last_deleted']}")
 
     logging.info("Показана статистика.")
 
@@ -553,9 +583,13 @@ def run_debug_functions(links):
     print("1. Вывести все настройки")
     print("2. Тестировать доступность URL")
     print("3. Очистить файл логов")
-    print("4. Назад")
+    print("4. Сброс файла настроек")
+    print("5. Сброс файла ссылок")
+    print("6. Включить/отключить проверку через регулярные выражения")
+    print("7. Включить/отключить проверку через Validators")
+    print("8. Назад")
 
-    choice = menu_option("Выберите действие: ", range(1, 5))
+    choice = menu_option("Выберите действие: ", range(1, 9))
 
     if choice == 1:
         print(Fore.YELLOW + "Текущие настройки:")
@@ -582,6 +616,26 @@ def run_debug_functions(links):
             print(Fore.RED + f"Ошибка при очистке файла логов: {e}")
             logging.error(f"Ошибка при очистке файла логов через отладочную функцию: {e}")
     elif choice == 4:
+        reset_program()
+        print(Fore.GREEN + "Файл настроек сброшен.")
+    elif choice == 5:
+        if os.path.exists(LINKS_FILENAME):
+            os.remove(LINKS_FILENAME)
+            logging.warning("Файл со ссылками удален.")
+            print(Fore.GREEN + "Файл ссылок сброшен.")
+        else:
+            print(Fore.RED + "Файл ссылок не найден.")
+    elif choice == 6:
+        settings["use_regex"] = not settings["use_regex"]
+        save_settings(settings)
+        status = "включена" if settings["use_regex"] else "выключена"
+        print(f"Проверка через регулярные выражения {status}.")
+    elif choice == 7:
+        settings["use_validators"] = not settings["use_validators"]
+        save_settings(settings)
+        status = "включена" if settings["use_validators"] else "выключена"
+        print(f"Проверка через Validators {status}.")
+    elif choice == 8:
         pass
 
 def menu_option(prompt, options):
@@ -595,12 +649,11 @@ def menu_option(prompt, options):
         except ValueError:
             print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
 
-# Основной цикл
+
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 url_links = load_links()
 settings = load_settings()
 set_log_level(settings) 
-
 
 if settings["password_required"]:
     password_attempts = 3
@@ -619,7 +672,7 @@ if settings["password_required"]:
         exit()
 
 print(Fore.GREEN + "Добро пожаловать в Link Manager!")
-print(Fore.GREEN + "Версия: 2.0")
+print(Fore.GREEN + "Версия: 2.5")
 logging.info("Программа запущена.")
 
 while True:
@@ -687,6 +740,7 @@ while True:
             continue
         url_links[new_key] = {"url": new_url, "date_added": str(datetime.now()), "category": new_category, "description": new_description}
         save_links(url_links)
+        statistics["last_modified"] = str(datetime.now())  # Обновляем время последнего изменения
         print(Fore.GREEN + f"Ссылка для ключа '{new_key}' добавлена/обновлена.")
         logging.info(f"Добавлена/обновлена ссылка: '{new_key}' - '{new_url}' (Категория: '{new_category}', Описание: '{new_description}')")
 
@@ -695,6 +749,7 @@ while True:
         if key_to_delete in url_links:
             del url_links[key_to_delete]
             save_links(url_links)
+            statistics["last_deleted"] = str(datetime.now())  # Обновляем время последнего удаления
             print(Fore.GREEN + f"Ссылка для ключа '{key_to_delete}' удалена.")
             logging.info(f"Удалена ссылка с ключом: '{key_to_delete}'.")
         else:
@@ -721,11 +776,13 @@ while True:
             print("2. Пароль на открытие программы (сейчас: " + ("ВКЛ" if settings["password_required"] else "ВЫКЛ") + ")")
             print("3. Отображать ссылки (сейчас: " + ("ВКЛ" if settings["show_links"] else "ВЫКЛ") + ")")
             print("4. Уровень логирования (сейчас: " + settings.get("log_level", "INFO") + ")")
-            print("5. Отладочные функции")
-            print("6. Сброс программы")
-            print("7. Назад")
+            print("5. Проверка через регулярные выражения (сейчас: " + ("ВКЛ" if settings["use_regex"] else "ВЫКЛ") + ")")
+            print("6. Проверка через Validators (сейчас: " + ("ВКЛ" if settings["use_validators"] else "ВЫКЛ") + ")")
+            print("7. Отладочные функции")
+            print("8. Сброс программы")
+            print("9. Назад")
 
-            settings_choice = menu_option("Введите номер действия: ", range(1, 8))
+            settings_choice = menu_option("Введите номер действия: ", range(1, 10))
 
             if settings_choice == 1:
                 new_password = getpass.getpass("Введите новый пароль: ")
@@ -755,14 +812,24 @@ while True:
                 save_settings(settings)
                 set_log_level(settings)
             elif settings_choice == 5:
-                run_debug_functions(url_links)
+                settings["use_regex"] = not settings["use_regex"]
+                save_settings(settings)
+                status = "включена" if settings["use_regex"] else "выключена"
+                print(f"Проверка через регулярные выражения {status}.")
             elif settings_choice == 6:
+                settings["use_validators"] = not settings["use_validators"]
+                save_settings(settings)
+                status = "включена" if settings["use_validators"] else "выключена"
+                print(f"Проверка через Validators {status}.")
+            elif settings_choice == 7:
+                run_debug_functions(url_links)
+            elif settings_choice == 8:
                 reset_program()
                 url_links = load_links()
                 settings = load_settings()
                 set_log_level(settings)
                 break
-            elif settings_choice == 7:
+            elif settings_choice == 9:
                 break
 
     elif choice == 7:
