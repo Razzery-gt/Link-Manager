@@ -313,7 +313,7 @@ def import_links(filename, format):
                 skipped_duplicates += 1
             elif data['url'] in [link['url'] for link in url_links.values()]:
                 print(Fore.YELLOW + f"Ссылка '{data['url']}' уже существует. Пропускаем.")
-                logging.warning(f"Пропущена дублирующаяся ссылка при импорте: '{data['url}'")
+                logging.warning(f"Пропущена дублирующаяся ссылка при импорте: '{data['url']}'")
                 skipped_duplicates += 1
             else:
                 url_links[key] = data
@@ -328,6 +328,7 @@ def import_links(filename, format):
     except Exception as e:
         print(Fore.RED + f"Ошибка при импорте ссылок: {e}.")
         logging.error(f"Ошибка при импорте ссылок: {e}")
+
 
 def import_from_csv(filename):
     links = {}
