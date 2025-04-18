@@ -332,7 +332,7 @@ def import_links(filename, format):
 
 def import_from_csv(filename):
     links = {}
-    with open(filename, mode='r', encoding='utf-8') as csv_file
+    with open(filename, mode='r', encoding='utf-8') as csv_file:
         reader = csv.reader(csv_file)
         next(reader, None)  # Skip header
         for row in reader:
@@ -355,6 +355,7 @@ def import_from_csv(filename):
                 logging.warning(f"Неверное количество столбцов в строке CSV: '{row}'. Пропущено.")
     logging.info(f"Ссылки импортированы из CSV: {filename}")
     return links
+
 
 def import_from_json(filename):
     with open(filename, 'r', encoding='utf-8') as f:
