@@ -15,38 +15,38 @@ from tkinter import filedialog
 import pyperclip
 from datetime import datetime
 from colorama import init, Fore
-import re  # Импорт модуля для регулярных выражений
-import logging  # Импорт модуля для логирования
+import re  
+import logging  
 
-# Инициализация библиотеки colorama
+
 init(autoreset=True)
 
-# Константы
+
 DOCUMENTS_DIR = os.path.join(os.path.expanduser("~"), "Documents", "LinkManager files")
 LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
 
-# Настройка логирования
+
 logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Начальные настройки
+
 default_settings = {
     "password": bcrypt.hashpw("1234".encode(), bcrypt.gensalt()).decode(),
     "password_required": False,
     "show_links": True,
-    "log_level": "INFO",  # Уровень логирования по умолчанию
-    "debug_mode": False  # Режим отладки по умолчанию
+    "log_level": "INFO",  
+    "debug_mode": False  
 }
 
-# Стандартные ссылки
+
 default_links = {
     "открыть_браузер": {"url": "https://example.com", "date_added": str(datetime.now()), "category": "Общее", "description": ""},
     "гугл": {"url": "https://www.google.com", "date_added": str(datetime.now()), "category": "Поиск", "description": ""},
     "яндекс": {"url": "https://www.yandex.ru", "date_added": str(datetime.now()), "category": "Поиск", "description": ""}
 }
 
-# Функции
+
 def load_links():
     if os.path.exists(LINKS_FILENAME):
         try:
@@ -531,7 +531,7 @@ def show_statistics(links):
     for category, count in category_counts.items():
         print(f"- {category}: {count}")
 
-    # Дополнительную статистику можно добавить здесь
+    # Ждите дополнительной статистики
 
     logging.info("Показана статистика.")
 
@@ -599,9 +599,9 @@ def menu_option(prompt, options):
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 url_links = load_links()
 settings = load_settings()
-set_log_level(settings) # Установка уровня логирования при запуске
+set_log_level(settings) 
 
-# Проверка пароля
+
 if settings["password_required"]:
     password_attempts = 3
     while password_attempts > 0:
@@ -619,7 +619,7 @@ if settings["password_required"]:
         exit()
 
 print(Fore.GREEN + "Добро пожаловать в Link Manager!")
-print(Fore.GREEN + "Версия: 1.2 (с расширенными функциями)")
+print(Fore.GREEN + "Версия: 2.0")
 logging.info("Программа запущена.")
 
 while True:
