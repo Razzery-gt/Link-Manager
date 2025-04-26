@@ -26,7 +26,7 @@ LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
 
-logging.basicConfig(filename=LOG_FILENAME, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 default_settings = {
     "password": bcrypt.hashpw("1234".encode(), bcrypt.gensalt()).decode(),
@@ -44,7 +44,6 @@ default_links = {
     "яндекс": {"url": "https://www.yandex.ru", "date_added": str(datetime.now()), "category": "Поиск", "description": ""}
 }
 
-
 statistics = {
     "last_import": None,
     "last_export": None,
@@ -58,9 +57,8 @@ def load_links():
         try:
             with open(LINKS_FILENAME, 'r', encoding='utf-8') as f:
                 links = json.load(f)
-                # Преобразование старых форматов в новый формат с датой добавления и категорией
                 for key, value in links.items():
-                    if isinstance(value, str):  # Старый формат, только URL
+                    if isinstance(value, str):
                         links[key] = {"url": value, "date_added": str(datetime.now()), "category": "Без категории", "description": ""}
                     elif "category" not in value:
                         value["category"] = "Без категории"
@@ -89,7 +87,6 @@ def load_settings():
         try:
             with open(SETTINGS_FILENAME, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                # Добавление новых настроек, если они отсутствуют
                 for key, value in default_settings.items():
                     if key not in settings:
                         settings[key] = value
@@ -120,16 +117,14 @@ def open_browser(url):
         print(Fore.RED + f"Ошибка при открытии браузера: {e}")
         logging.error(f"Ошибка при открытии браузера: {e}")
 
-
-
 def is_valid_url_regex(url):
     regex = re.compile(
-        r'^(?:http|ftp)s?://'  # Протокол
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # Домен
-        r'localhost|'  # Локальный хост
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  # Локальный IP
-        r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  # IPv6
-        r'(?::\d+)?'  # Порт
+        r'^(?:http|ftp)s?://'  
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  
+        r'localhost|'  
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  
+        r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  
+        r'(?::\d+)?'  
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     return re.match(regex, url) is not None
 
@@ -211,6 +206,24 @@ def choose_file(save=False, filetypes=(("JSON files", "*.json"), ("All files", "
             logging.info(f"Выбран файл для импорта: {filepath}")
     return filepath
 
+def check_for_updates(current_version):
+    try:
+        response = requests.get("https://api.github.com/repos/Razzery-gt/Link-Manager/releases/latest")
+        if response.status_code == 200:
+            latest_release = response.json()
+            latest_version = latest_release['tag_name']
+            if current_version < latest_version:
+                print(Fore.YELLOW + f"Доступна новая версия: {latest_version}. Обновите программу.")
+                logging.info(f"Доступна новая версия: {latest_version}. Текущая версия: {current_version}.")
+            else:
+                print(Fore.GREEN + "Вы используете последнюю версию.")
+                logging.info("Вы используете последнюю версию.")
+        else:
+            print(Fore.RED + "Не удалось проверить обновления.")
+            logging.error(f"Ошибка при проверке обновлений: статус {response.status_code}")
+    except Exception as e:
+        print(Fore.RED + f"Ошибка при проверке обновлений: {e}")
+        logging.error(f"Ошибка при проверке обновлений: {e}")
 
 def export_links(links, filename, format):
     try:
@@ -235,7 +248,7 @@ def export_links(links, filename, format):
 
         print(Fore.GREEN + f"Ссылки экспортированы в {filename} в формате {format.upper()}.")
         logging.info(f"Ссылки экспортированы в {filename} в формате {format.upper()}.")
-        statistics["last_export"] = str(datetime.now())  # Обновляем время последнего экспорта
+        statistics["last_export"] = str(datetime.now())
 
     except Exception as e:
         print(Fore.RED + f"Ошибка при экспорте ссылок: {e}.")
@@ -306,7 +319,6 @@ def export_to_xlsx(links, filename):
     df.to_excel(filename, index=False)
     logging.info(f"Ссылки экспортированы в XLSX: {filename}")
 
-# --- Функции импорта ---
 def import_links(filename, format):
     try:
         if format == 'csv':
@@ -328,7 +340,6 @@ def import_links(filename, format):
             logging.warning(f"Попытка импорта из неподдерживаемого формата: {format}")
             return
 
-        # Добавляем новые ссылки, проверяя дубликаты
         imported_count = 0
         skipped_duplicates = 0
         for key, data in new_links.items():
@@ -347,7 +358,7 @@ def import_links(filename, format):
                 imported_count += 1
 
         save_links(url_links)
-        statistics["last_import"] = str(datetime.now())  # Обновляем время последнего импорта
+        statistics["last_import"] = str(datetime.now())
         print(Fore.GREEN + f"Импортировано {imported_count} ссылок из {filename} в формате {format.upper()}. Пропущено {skipped_duplicates} дубликатов.")
         logging.info(f"Импортировано {imported_count} ссылок из {filename} в формате {format.upper()}. Пропущено {skipped_duplicates} дубликатов.")
 
@@ -359,7 +370,7 @@ def import_from_csv(filename):
     links = {}
     with open(filename, mode='r', encoding='utf-8') as csv_file:
         reader = csv.reader(csv_file)
-        next(reader, None)  # Skip header
+        next(reader, None)  
         for row in reader:
             if len(row) == 5:
                 key, url, date_added, category, description = row
@@ -368,7 +379,7 @@ def import_from_csv(filename):
                 else:
                     print(Fore.RED + f"Неверный URL '{url}' в строке '{row}'. Пропускаем.")
                     logging.warning(f"Неверный URL '{url}' в строке CSV '{row}'. Пропущено.")
-            elif len(row) == 4: # Обработка файлов без описания для совместимости
+            elif len(row) == 4:
                 key, url, date_added, category = row
                 if is_valid_url(url):
                     links[key] = {'url': url, 'date_added': date_added, 'category': category, 'description': ""}
@@ -486,11 +497,11 @@ def import_from_xlsx(filename):
     df = pd.read_excel(filename)
     links = {}
     for index, row in df.iterrows():
-        key = str(row['Key'])  # Convert key to string to handle numeric keys
+        key = str(row['Key'])  
         url = row['URL']
-        date_added = str(row['Date Added'])  # Convert date to string
+        date_added = str(row['Date Added'])  
         category = str(row['Category'])
-        description = str(row.get('Description', '')) # Получаем описание, если есть
+        description = str(row.get('Description', '')) 
         links[key] = {'url': url, 'date_added': date_added, 'category': category, 'description': description}
     logging.info(f"Ссылки импортированы из XLSX: {filename}")
     return links
@@ -504,7 +515,7 @@ def search_links(links, query, search_type='keyword', filters=None):
         if search_type == 'regex':
             if re.search(query, key, re.IGNORECASE) or re.search(query, data['url'], re.IGNORECASE) or re.search(query, data['category'], re.IGNORECASE) or re.search(query, data['description'], re.IGNORECASE):
                 include = True
-        else:  # search_type == 'keyword'
+        else:
             if query.lower() in key.lower() or query.lower() in data['url'].lower() or query.lower() in data['category'].lower() or query.lower() in data['description'].lower():
                 include = True
 
@@ -555,15 +566,26 @@ def show_statistics(links):
     for category, count in category_counts.items():
         print(f"- {category}: {count}")
 
-    # Показать время последних действий
     print(Fore.YELLOW + "\nПоследние действия:")
-    print(f"- Последний импорт: {statistics['last_import']}")
-    print(f"- Последний экспорт: {statistics['last_export']}")
-    print(f"- Последнее открытие: {statistics['last_opened']}")
-    print(f"- Последнее изменение: {statistics['last_modified']}")
-    print(f"- Последнее удаление: {statistics['last_deleted']}")
+    print(f"- Последний импорт: {statistics['last_import'] if statistics['last_import'] else 'Никогда'}")
+    print(f"- Последний экспорт: {statistics['last_export'] if statistics['last_export'] else 'Никогда'}")
+    print(f"- Последнее открытие: {statistics['last_opened'] if statistics['last_opened'] else 'Никогда'}")
+    print(f"- Последнее изменение: {statistics['last_modified'] if statistics['last_modified'] else 'Никогда'}")
+    print(f"- Последнее удаление: {statistics['last_deleted'] if statistics['last_deleted'] else 'Никогда'}")
 
     logging.info("Показана статистика.")
+
+def reset_statistics():
+    global statistics
+    statistics = {
+        "last_import": None,
+        "last_export": None,
+        "last_opened": None,
+        "last_modified": None,
+        "last_deleted": None
+    }
+    print(Fore.GREEN + "Статистика сброшена.")
+    logging.info("Статистика сброшена.")
 
 def set_log_level(settings):
     level_str = settings.get("log_level", "INFO").upper()
@@ -585,11 +607,13 @@ def run_debug_functions(links):
     print("3. Очистить файл логов")
     print("4. Сброс файла настроек")
     print("5. Сброс файла ссылок")
-    print("6. Включить/отключить проверку через регулярные выражения")
-    print("7. Включить/отключить проверку через Validators")
-    print("8. Назад")
+    print("6. Сбросить статистику")
+    print("7. Включить/отключить проверку через регулярные выражения")
+    print("8. Включить/отключить проверку через Validators")
+    print("9. Проверка актуальной версии")
+    print("10. Назад")
 
-    choice = menu_option("Выберите действие: ", range(1, 9))
+    choice = menu_option("Выберите действие: ", range(1, 11))
 
     if choice == 1:
         print(Fore.YELLOW + "Текущие настройки:")
@@ -626,16 +650,20 @@ def run_debug_functions(links):
         else:
             print(Fore.RED + "Файл ссылок не найден.")
     elif choice == 6:
+        reset_statistics()
+    elif choice == 7:
         settings["use_regex"] = not settings["use_regex"]
         save_settings(settings)
         status = "включена" if settings["use_regex"] else "выключена"
         print(f"Проверка через регулярные выражения {status}.")
-    elif choice == 7:
+    elif choice == 8:
         settings["use_validators"] = not settings["use_validators"]
         save_settings(settings)
         status = "включена" if settings["use_validators"] else "выключена"
         print(f"Проверка через Validators {status}.")
-    elif choice == 8:
+    elif choice == 9:
+        check_for_updates("2.6")
+    elif choice == 10:
         pass
 
 def menu_option(prompt, options):
@@ -648,7 +676,6 @@ def menu_option(prompt, options):
                 print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
         except ValueError:
             print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
-
 
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 url_links = load_links()
@@ -672,8 +699,10 @@ if settings["password_required"]:
         exit()
 
 print(Fore.GREEN + "Добро пожаловать в Link Manager!")
-print(Fore.GREEN + "Версия: 2.5")
+print(Fore.GREEN + "Версия: 2.7")
 logging.info("Программа запущена.")
+
+check_for_updates("2.7")
 
 while True:
     print("\nВыберите действие:")
@@ -740,7 +769,7 @@ while True:
             continue
         url_links[new_key] = {"url": new_url, "date_added": str(datetime.now()), "category": new_category, "description": new_description}
         save_links(url_links)
-        statistics["last_modified"] = str(datetime.now())  # Обновляем время последнего изменения
+        statistics["last_modified"] = str(datetime.now())  
         print(Fore.GREEN + f"Ссылка для ключа '{new_key}' добавлена/обновлена.")
         logging.info(f"Добавлена/обновлена ссылка: '{new_key}' - '{new_url}' (Категория: '{new_category}', Описание: '{new_description}')")
 
@@ -749,7 +778,7 @@ while True:
         if key_to_delete in url_links:
             del url_links[key_to_delete]
             save_links(url_links)
-            statistics["last_deleted"] = str(datetime.now())  # Обновляем время последнего удаления
+            statistics["last_deleted"] = str(datetime.now())  
             print(Fore.GREEN + f"Ссылка для ключа '{key_to_delete}' удалена.")
             logging.info(f"Удалена ссылка с ключом: '{key_to_delete}'.")
         else:
@@ -902,3 +931,4 @@ while True:
 
     else:
         print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
+
