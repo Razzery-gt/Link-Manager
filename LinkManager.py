@@ -25,6 +25,7 @@ DOCUMENTS_DIR = os.path.join(os.path.expanduser("~"), "Documents", "LinkManager 
 LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
+STATISTICS_FILENAME = os.path.join(DOCUMENTS_DIR, 'statistics.json')
 
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -51,6 +52,37 @@ statistics = {
     "last_modified": None,
     "last_deleted": None
 }
+
+def save_statistics(statistics):
+    try:
+        with open(STATISTICS_FILENAME, 'w', encoding='utf-8') as f:
+            json.dump(statistics, f, ensure_ascii=False, indent=4)
+        logging.info("Статистика сохранена в файл.")
+    except IOError as e:
+        logging.error(f"Ошибка при сохранении статистики: {e}")
+
+def load_statistics():
+    default_statistics = {
+        "last_import": None,
+        "last_export": None,
+        "last_opened": None,
+        "last_modified": None,
+        "last_deleted": None
+    }
+    
+    if os.path.exists(STATISTICS_FILENAME):
+        try:
+            with open(STATISTICS_FILENAME, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # Объединяем данные из файла с данными по умолчанию
+                for key in default_statistics.keys():
+                    if key not in data:
+                        data[key] = default_statistics[key]
+                return data
+        except (json.JSONDecodeError, IOError) as e:
+            logging.error(f"Ошибка загрузки статистики: {e}")
+    
+    return default_statistics  # Возвращаем стандартные значения, если файл не существует
 
 def load_links():
     if os.path.exists(LINKS_FILENAME):
@@ -212,9 +244,12 @@ def check_for_updates(current_version):
         if response.status_code == 200:
             latest_release = response.json()
             latest_version = latest_release['tag_name']
+            release_notes = latest_release.get('body', 'Нет описания обновления.')
             if current_version < latest_version:
                 print(Fore.YELLOW + f"Доступна новая версия: {latest_version}. Обновите программу.")
-                logging.info(f"Доступна новая версия: {latest_version}. Текущая версия: {current_version}.")
+                print(Fore.YELLOW + f"Описание обновления: {release_notes}")
+                logging.info(f"Доступна новая версия: {latest_version}. Текущая версия: {current_version}. Описание: {release_notes}")
+                # Здесь можно добавить логику для загрузки и установки обновления
             else:
                 print(Fore.GREEN + "Вы используете последнюю версию.")
                 logging.info("Вы используете последнюю версию.")
@@ -587,6 +622,7 @@ def reset_statistics():
     print(Fore.GREEN + "Статистика сброшена.")
     logging.info("Статистика сброшена.")
 
+
 def set_log_level(settings):
     level_str = settings.get("log_level", "INFO").upper()
     if hasattr(logging, level_str):
@@ -662,7 +698,7 @@ def run_debug_functions(links):
         status = "включена" if settings["use_validators"] else "выключена"
         print(f"Проверка через Validators {status}.")
     elif choice == 9:
-        check_for_updates("2.6")
+        check_for_updates("3.0")
     elif choice == 10:
         pass
 
@@ -680,6 +716,7 @@ def menu_option(prompt, options):
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 url_links = load_links()
 settings = load_settings()
+statistics = load_statistics()
 set_log_level(settings) 
 
 if settings["password_required"]:
@@ -699,10 +736,10 @@ if settings["password_required"]:
         exit()
 
 print(Fore.GREEN + "Добро пожаловать в Link Manager!")
-print(Fore.GREEN + "Версия: 2.7")
+print(Fore.GREEN + "Версия: 3.0")
 logging.info("Программа запущена.")
 
-check_for_updates("2.7")
+check_for_updates("3.0")
 
 while True:
     print("\nВыберите действие:")
@@ -927,8 +964,8 @@ while True:
     elif choice == 12:
         print(Fore.GREEN + "Выход из Link Manager.")
         logging.info("Программа завершена.")
+        save_statistics(statistics)
         break
 
     else:
         print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
-
