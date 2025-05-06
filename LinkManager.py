@@ -18,6 +18,9 @@ from datetime import datetime
 from colorama import init, Fore
 import re  
 import logging  
+import importlib.util
+
+from plugin_base import LinkManagerPlugin
 
 init(autoreset=True)
 
@@ -26,6 +29,8 @@ LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
 STATISTICS_FILENAME = os.path.join(DOCUMENTS_DIR, 'statistics.json')
+PLUGINS_DIR = 'plugins'
+PLUGIN_CONFIG_FILENAME = os.path.join(DOCUMENTS_DIR, plugins_config.json)
 
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -53,6 +58,10 @@ statistics = {
     "last_deleted": None
 }
 
+
+default_plugins_config = {"plugins":[]}
+
+
 def save_statistics(statistics):
     try:
         with open(STATISTICS_FILENAME, 'w', encoding='utf-8') as f:
@@ -60,6 +69,56 @@ def save_statistics(statistics):
         logging.info("Статистика сохранена в файл.")
     except IOError as e:
         logging.error(f"Ошибка при сохранении статистики: {e}")
+
+
+def load_plugins_config():
+    try:
+        with open(PLUGINS_CONFIG_FILENAME, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                return config
+        except (json.JSONDecodeError, IOError) as e:
+            print(Fore.RED + f"Ошибка загрузки конфигурации плагинов: {e}")
+            logging.error(f"Ошибка загрузки конфигурации плагинов: {e}")
+    return default_plugins_config
+
+def save_plugins_config(config):
+    try:
+        with open(PLUGINS_CONFIG_FILENAME, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+        logging.info("Конфигурация плагинов сохранена.")
+    except IOError as e:
+        print(Fore.RED + f"Ошибка при сохранении конфигурации плагинов: {e}")
+        logging.error(f"Ошибка при сохранении конфигурации плагинов: {e}")
+
+def discover_plugins():
+    plugins = []
+    for filename in os.listdir(PLUGINS_DIR):
+        if filename.endswith('.py') and filename != 'init.py':
+            filepath = os.path.join(PLUGINS_DIR, filename)
+            spec = importlib.util.spec_from_file_location(filename[:-3], filepath)
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                try:
+                    spec.loader.exec_module(module)
+                    for name in dir(module):
+                        obj = getattr(module, name)
+                        if isinstance(obj, type) and issubclass(obj, LinkManagerPlugin) and obj != LinkManagerPlugin:
+                            plugin_info = obj.plugin_info()
+                            plugins.append({
+                                'name': plugin_info.get('name', filename[:-3]),
+                                'module': filename[:-3],
+                                'class': name,
+                                'path': filepath,
+                                'version': plugin_info.get('version', '0.1'),
+                                'description': plugin_info.get('description', 'Нет описания'),
+                                'author': plugin_info.get('author', 'Неизвестно'),
+                                'status': 'enabled'  
+                            })
+                            break  
+                except Exception as e:
+                    print(Fore.RED + f"Ошибка при загрузке плагина '{filename}': {e}")
+                    logging.error(f"Ошибка при загрузке плагина '{filename}': {e}")
+    return plugins
 
 def load_statistics():
     default_statistics = {
