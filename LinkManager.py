@@ -45,9 +45,9 @@ default_settings = {
 }
 
 default_links = {
-    "открыть_браузер": {"url": "https://example.com", "date_added": str(datetime.now()), "category": "Общее", "description": ""},
-    "гугл": {"url": "https://www.google.com", "date_added": str(datetime.now()), "category": "Поиск", "description": ""},
-    "яндекс": {"url": "https://www.yandex.ru", "date_added": str(datetime.now()), "category": "Поиск", "description": ""}
+    "открыть_браузер": {"url": "https://example.com", "date_added": str(datetime.now()), "category": "Общее", "description": "Этот домен можно встраивать как пример в свои документы, приложения, тексты и прочие источники "},
+    "гугл": {"url": "https://www.google.com", "date_added": str(datetime.now()), "category": "Поиск", "description": "Всемирно известная американская поисковая система. Популярные продукты: YouTube, GMail, Chrome, Drive"},
+    "яндекс": {"url": "https://www.yandex.ru", "date_added": str(datetime.now()), "category": "Поиск", "description": "Российская поисковая система известная по всей России. Популярные продукты: Яндекс.Нейро, Яндекс.Алиса, Яндекс.Браузер"}
 }
 
 statistics = {
