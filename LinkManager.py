@@ -30,7 +30,7 @@ SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
 STATISTICS_FILENAME = os.path.join(DOCUMENTS_DIR, 'statistics.json')
 PLUGINS_DIR = 'plugins'
-PLUGIN_CONFIG_FILENAME = os.path.join(DOCUMENTS_DIR, plugins_config.json)
+PLUGIN_CONFIG_FILENAME = os.path.join(DOCUMENTS_DIR, 'plugins_config.json')
 
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
