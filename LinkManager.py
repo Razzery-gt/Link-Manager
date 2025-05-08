@@ -74,7 +74,7 @@ def save_statistics(statistics):
 
 def load_plugins_config():
     try:
-        with open(PLUGINS_CONFIG_FILENAME, 'r', encoding='utf-8') as f:
+        with open(PLUGIN_CONFIG_FILENAME, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 return config
     except (json.JSONDecodeError, IOError) as e:
