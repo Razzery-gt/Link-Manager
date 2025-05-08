@@ -120,6 +120,172 @@ def discover_plugins():
                     logging.error(f"Ошибка при загрузке плагина '{filename}': {e}")
     return plugins
 
+def load_plugins_config():
+    try:
+        with open(PLUGIN_CONFIG_FILENAME, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            return config
+    except (json.JSONDecodeError, IOError) as e:
+        print(Fore.RED + f"Ошибка загрузки конфигурации плагинов: {e}")
+        logging.error(f"Ошибка загрузки конфигурации плагинов: {e}")
+    return default_plugins_config
+
+def save_plugins_config(config):
+    try:
+        with open(PLUGIN_CONFIG_FILENAME, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+        logging.info("Конфигурация плагинов сохранена.")
+    except IOError as e:
+        print(Fore.RED + f"Ошибка при сохранении конфигурации плагинов: {e}")
+        logging.error(f"Ошибка при сохранении конфигурации плагинов: {e}")
+
+def discover_plugins():
+    plugins = []
+    os.makedirs(PLUGINS_DIR, exist_ok=True)
+    for filename in os.listdir(PLUGINS_DIR):
+        if filename.endswith('.py') and filename != '__init__.py':
+            filepath = os.path.join(PLUGINS_DIR, filename)
+            spec = importlib.util.spec_from_file_location(filename[:-3], filepath)
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                try:
+                    spec.loader.exec_module(module)
+                    for name in dir(module):
+                        obj = getattr(module, name)
+                        if isinstance(obj, type) and issubclass(obj, LinkManagerPlugin) and obj != LinkManagerPlugin:
+                            plugin_info = obj.plugin_info()
+                            plugins.append({
+                                'name': plugin_info.get('name', filename[:-3]),
+                                'module': filename[:-3],
+                                'class': name,
+                                'path': filepath,
+                                'version': plugin_info.get('version', '0.1'),
+                                'description': plugin_info.get('description', 'Нет описания'),
+                                'author': plugin_info.get('author', 'Неизвестно'),
+                                'status': 'disabled'
+                            })
+                            break
+                except Exception as e:
+                    print(Fore.RED + f"Ошибка при загрузке плагина '{filename}': {e}")
+                    logging.error(f"Ошибка при загрузке плагина '{filename}': {e}")
+    return plugins
+
+def manage_plugins():
+    plugins_config = load_plugins_config()
+    available_plugins = discover_plugins()
+
+    # Обновляем конфигурацию, добавляя новые плагины
+    for plugin in available_plugins:
+        found = False
+        for existing in plugins_config['plugins']:
+            if existing['path'] == plugin['path']:
+                found = True
+                break
+        if not found:
+            plugins_config['plugins'].append({
+                'name': plugin['name'],
+                'path': plugin['path'],
+                'status': 'disabled'
+            })
+    save_plugins_config(plugins_config)
+
+    while True:
+        plugins_config = load_plugins_config()
+        print("\nУправление плагинами:")
+        if not plugins_config['plugins']:
+            print(Fore.YELLOW + "Нет доступных плагинов.")
+        else:
+            for i, plugin in enumerate(plugins_config['plugins']):
+                print(f"{i+1}. {plugin['name']} - Статус: {Fore.GREEN}{plugin['status']}{Fore.RESET}")
+        print("1. Активировать плагин")
+        print("2. Деактивировать плагин")
+        print("3. Информация о плагине")
+        print("4. Назад")
+
+        choice_str = input("Выберите действие: ")
+
+        if choice_str == '1':
+            index_str = input("Введите номер плагина для активации: ")
+            if index_str.isdigit():
+                index = int(index_str) - 1
+                if 0 <= index < len(plugins_config['plugins']):
+                    plugins_config['plugins'][index]['status'] = 'enabled'
+                    save_plugins_config(plugins_config)
+                    print(Fore.GREEN + f"Плагин '{plugins_config['plugins'][index]['name']}' активирован.")
+                else:
+                    print(Fore.RED + "Неверный номер плагина.")
+            else:
+                print(Fore.RED + "Неверный ввод.")
+        elif choice_str == '2':
+            index_str = input("Введите номер плагина для деактивации: ")
+            if index_str.isdigit():
+                index = int(index_str) - 1
+                if 0 <= index < len(plugins_config['plugins']):
+                    plugins_config['plugins'][index]['status'] = 'disabled'
+                    save_plugins_config(plugins_config)
+                    print(Fore.YELLOW + f"Плагин '{plugins_config['plugins'][index]['name']}' деактивирован.")
+                else:
+                    print(Fore.RED + "Неверный номер плагина.")
+            else:
+                print(Fore.RED + "Неверный ввод.")
+        elif choice_str == '3':
+            index_str = input("Введите номер плагина для просмотра информации: ")
+            if index_str.isdigit():
+                index = int(index_str) - 1
+                if 0 <= index < len(plugins_config['plugins']):
+                    plugin_data = plugins_config['plugins'][index]
+                    plugin_path = plugin_data['path']
+                    module_name = plugin_data['module']
+                    class_name = plugin_data['class']
+                    spec = importlib.util.spec_from_file_location(module_name, plugin_path)
+                    if spec and spec.loader:
+                        module = importlib.util.module_from_spec(spec)
+                        try:
+                            spec.loader.exec_module(module)
+                            if hasattr(module, class_name):
+                                plugin_class = getattr(module, class_name)
+                                if hasattr(plugin_class, 'plugin_info'):
+                                    info = plugin_class.plugin_info()
+                                    print(Fore.CYAN + "\nИнформация о плагине:")
+                                    for key, value in info.items():
+                                        print(f"{key.capitalize()}: {value}")
+                                else:
+                                    print(Fore.RED + "Информация о плагине не найдена.")
+                            else:
+                                print(Fore.RED + f"Класс '{class_name}' не найден в модуле.")
+                        except Exception as e:
+                            print(Fore.RED + f"Ошибка при загрузке информации о плагине: {e}")
+                else:
+                    print(Fore.RED + "Неверный номер плагина.")
+            else:
+                print(Fore.RED + "Неверный ввод.")
+        elif choice_str == '4':
+            break
+        else:
+            print(Fore.RED + "Неверный ввод.")
+
+def run_plugins(url_links: Dict[str, Dict[str, str]], action: str = None, key: str = None, **kwargs: Any):
+    plugins_config = load_plugins_config()
+    for plugin_data in plugins_config['plugins']:
+        if plugin_data['status'] == 'enabled':
+            plugin_path = plugin_data['path']
+            module_name = plugin_data['module']
+            class_name = plugin_data['class']
+            spec = importlib.util.spec_from_file_location(module_name, plugin_path)
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                try:
+                    spec.loader.exec_module(module)
+                    if hasattr(module, class_name):
+                        plugin_class = getattr(module, class_name)
+                        if issubclass(plugin_class, LinkManagerPlugin) and plugin_class != LinkManagerPlugin:
+                            plugin_instance = plugin_class()
+                            plugin_instance.run(url_links, action, key, **kwargs)
+                except Exception as e:
+                    print(Fore.RED + f"Ошибка при запуске плагина '{plugin_data['name']}': {e}")
+                    logging.error(f"Ошибка при запуске плагина '{plugin_data['name']}': {e}")
+
+
 def load_statistics():
     default_statistics = {
         "last_import": None,
@@ -735,7 +901,8 @@ def run_debug_functions(links):
             print(Fore.RED + f"Ошибка при очистке файла логов: {e}")
             logging.error(f"Ошибка при очистке файла логов через отладочную функцию: {e}")
     elif choice == 4:
-        reset_program()
+        if os.path.exists(SETTINGS_FILENAME):
+            os.remove(SETTINGS_FILENAME)
         print(Fore.GREEN + "Файл настроек сброшен.")
     elif choice == 5:
         if os.path.exists(LINKS_FILENAME):
@@ -905,9 +1072,10 @@ while True:
             print("6. Проверка через Validators (сейчас: " + ("ВКЛ" if settings["use_validators"] else "ВЫКЛ") + ")")
             print("7. Отладочные функции")
             print("8. Сброс программы")
-            print("9. Назад")
+            print("9. Центр плагинов")
+            print("10. Назад")
 
-            settings_choice = menu_option("Введите номер действия: ", range(1, 10))
+            settings_choice = menu_option("Введите номер действия: ", range(1, 11))
 
             if settings_choice == 1:
                 new_password = getpass.getpass("Введите новый пароль: ")
@@ -955,6 +1123,8 @@ while True:
                 set_log_level(settings)
                 break
             elif settings_choice == 9:
+                manage_plugins() 
+            elif settings_choice == 10:
                 break
 
     elif choice == 7:
