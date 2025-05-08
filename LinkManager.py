@@ -30,8 +30,8 @@ LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
 STATISTICS_FILENAME = os.path.join(DOCUMENTS_DIR, 'statistics.json')
-PLUGINS_DIR = os.path.join(DOCUMENTS_DIR, 'plugins') # Теперь папка плагинов внутри DOCUMENTS_DIR
-PLUGIN_CONFIG_FILENAME = os.path.join(PLUGINS_DIR, 'plugins_config.json') # Конфиг тоже там
+PLUGINS_DIR = os.path.join(DOCUMENTS_DIR, 'plugins') 
+PLUGIN_CONFIG_FILENAME = os.path.join(PLUGINS_DIR, 'plugins_config.json') 
 
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -93,7 +93,7 @@ def save_plugins_config(config):
 
 def discover_plugins():
     plugins = []
-    os.makedirs(PLUGINS_DIR, exist_ok=True) # Автоматическое создание папки плагинов
+    os.makedirs(PLUGINS_DIR, exist_ok=True) 
     for filename in os.listdir(PLUGINS_DIR):
         if filename.endswith('.py') and filename != 'init.py':
             filepath = os.path.join(PLUGINS_DIR, filename)
@@ -123,7 +123,7 @@ def discover_plugins():
     return plugins
 
 def load_plugins_config():
-    os.makedirs(PLUGINS_DIR, exist_ok=True) # Убеждаемся, что папка существует перед попыткой чтения конфига
+    os.makedirs(PLUGINS_DIR, exist_ok=True)
     try:
         with open(PLUGIN_CONFIG_FILENAME, 'r', encoding='utf-8') as f:
                 config = json.load(f)
@@ -134,7 +134,7 @@ def load_plugins_config():
     return default_plugins_config
 
 def save_plugins_config(config):
-    os.makedirs(PLUGINS_DIR, exist_ok=True) # Убеждаемся, что папка существует перед попыткой записи конфига
+    os.makedirs(PLUGINS_DIR, exist_ok=True) 
     try:
         with open(PLUGIN_CONFIG_FILENAME, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
@@ -157,7 +157,7 @@ def manage_plugins():
     plugins_config = load_plugins_config()
     available_plugins = discover_plugins()
 
-    # Обновляем конфигурацию, добавляя новые плагины
+
     for plugin in available_plugins:
         found = False
         for existing in plugins_config['plugins']:
@@ -280,7 +280,8 @@ def load_statistics():
         except (json.JSONDecodeError, IOError) as e:
             logging.error(f"Ошибка загрузки статистики: {e}")
     
-    return default_statistics  # Возвращаем стандартные значения, если файл не существует
+    return default_statistics  
+
 
 def load_links():
     if os.path.exists(LINKS_FILENAME):
@@ -447,7 +448,6 @@ def check_for_updates(current_version):
                 print(Fore.YELLOW + f"Доступна новая версия: {latest_version}. Обновите программу.")
                 print(Fore.YELLOW + f"Описание обновления: {release_notes}")
                 logging.info(f"Доступна новая версия: {latest_version}. Текущая версия: {current_version}. Описание: {release_notes}")
-                # Здесь можно добавить логику для загрузки и установки обновления
             else:
                 print(Fore.GREEN + "Вы используете последнюю версию.")
                 logging.info("Вы используете последнюю версию.")
@@ -897,7 +897,7 @@ def run_debug_functions(links):
         status = "включена" if settings["use_validators"] else "выключена"
         print(f"Проверка через Validators {status}.")
     elif choice == 9:
-        check_for_updates("3.0")
+        check_for_updates("3.1")
     elif choice == 10:
         pass
 
@@ -935,10 +935,10 @@ if settings["password_required"]:
         exit()
 
 print(Fore.GREEN + "Добро пожаловать в Link Manager!")
-print(Fore.GREEN + "Версия: 3.0")
+print(Fore.GREEN + "Версия: 3.1")
 logging.info("Программа запущена.")
 
-check_for_updates("3.0")
+check_for_updates("3.1")
 
 while True:
     print("\nВыберите действие:")
@@ -1172,8 +1172,8 @@ while True:
     else:
         print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
 
-# Инициализация плагинов при запуске
-os.makedirs(PLUGINS_DIR, exist_ok=True) # Убеждаемся, что папка существует при запуске
+
+os.makedirs(PLUGINS_DIR, exist_ok=True) 
 plugins_config = load_plugins_config()
 discover_plugins()
 # save_plugins_config(plugins_config) # Сохранение происходит внутри discover_plugins и manage_plugins
