@@ -20,6 +20,7 @@ import re
 import logging  
 import importlib.util
 
+from typing import Dict, Any
 from plugin_base import LinkManagerPlugin
 
 init(autoreset=True)
@@ -112,7 +113,7 @@ def discover_plugins():
                                 'version': plugin_info.get('version', '0.1'),
                                 'description': plugin_info.get('description', 'Нет описания'),
                                 'author': plugin_info.get('author', 'Неизвестно'),
-                                'status': 'enabled'  
+                                'status': 'disabled'  
                             })
                             break  
                 except Exception as e:
@@ -120,15 +121,6 @@ def discover_plugins():
                     logging.error(f"Ошибка при загрузке плагина '{filename}': {e}")
     return plugins
 
-def load_plugins_config():
-    try:
-        with open(PLUGIN_CONFIG_FILENAME, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-            return config
-    except (json.JSONDecodeError, IOError) as e:
-        print(Fore.RED + f"Ошибка загрузки конфигурации плагинов: {e}")
-        logging.error(f"Ошибка загрузки конфигурации плагинов: {e}")
-    return default_plugins_config
 
 def save_plugins_config(config):
     try:
@@ -139,36 +131,6 @@ def save_plugins_config(config):
         print(Fore.RED + f"Ошибка при сохранении конфигурации плагинов: {e}")
         logging.error(f"Ошибка при сохранении конфигурации плагинов: {e}")
 
-def discover_plugins():
-    plugins = []
-    os.makedirs(PLUGINS_DIR, exist_ok=True)
-    for filename in os.listdir(PLUGINS_DIR):
-        if filename.endswith('.py') and filename != '__init__.py':
-            filepath = os.path.join(PLUGINS_DIR, filename)
-            spec = importlib.util.spec_from_file_location(filename[:-3], filepath)
-            if spec and spec.loader:
-                module = importlib.util.module_from_spec(spec)
-                try:
-                    spec.loader.exec_module(module)
-                    for name in dir(module):
-                        obj = getattr(module, name)
-                        if isinstance(obj, type) and issubclass(obj, LinkManagerPlugin) and obj != LinkManagerPlugin:
-                            plugin_info = obj.plugin_info()
-                            plugins.append({
-                                'name': plugin_info.get('name', filename[:-3]),
-                                'module': filename[:-3],
-                                'class': name,
-                                'path': filepath,
-                                'version': plugin_info.get('version', '0.1'),
-                                'description': plugin_info.get('description', 'Нет описания'),
-                                'author': plugin_info.get('author', 'Неизвестно'),
-                                'status': 'disabled'
-                            })
-                            break
-                except Exception as e:
-                    print(Fore.RED + f"Ошибка при загрузке плагина '{filename}': {e}")
-                    logging.error(f"Ошибка при загрузке плагина '{filename}': {e}")
-    return plugins
 
 def manage_plugins():
     plugins_config = load_plugins_config()
