@@ -179,7 +179,8 @@ def manage_plugins():
             print(Fore.YELLOW + "Нет доступных плагинов.")
         else:
             for i, plugin in enumerate(plugins_config['plugins']):
-                print(f"{i+1}. {plugin['name']} - Статус: {Fore.GREEN}{plugin['status']}{Fore.RESET}")
+                status_color = Fore.GREEN if plugin['status'] == 'enabled' else Fore.YELLOW
+                print(f"{i+1}. {plugin['name']} - Статус: {status_color}{plugin['status']}{Fore.RESET}")
         print("1. Активировать плагин")
         print("2. Деактивировать плагин")
         print("3. Информация о плагине")
@@ -216,28 +217,17 @@ def manage_plugins():
             if index_str.isdigit():
                 index = int(index_str) - 1
                 if 0 <= index < len(plugins_config['plugins']):
-                    plugin_data = plugins_config['plugins'][index]
-                    plugin_path = plugin_data['path']
-                    module_name = plugin_data['module']
-                    class_name = plugin_data['class']
-                    spec = importlib.util.spec_from_file_location(module_name, plugin_path)
-                    if spec and spec.loader:
-                        module = importlib.util.module_from_spec(spec)
-                        try:
-                            spec.loader.exec_module(module)
-                            if hasattr(module, class_name):
-                                plugin_class = getattr(module, class_name)
-                                if hasattr(plugin_class, 'plugin_info'):
-                                    info = plugin_class.plugin_info()
-                                    print(Fore.CYAN + "\nИнформация о плагине:")
-                                    for key, value in info.items():
-                                        print(f"{key.capitalize()}: {value}")
-                                else:
-                                    print(Fore.RED + "Информация о плагине не найдена.")
-                            else:
-                                print(Fore.RED + f"Класс '{class_name}' не найден в модуле.")
-                        except Exception as e:
-                            print(Fore.RED + f"Ошибка при загрузке информации о плагине: {e}")
+                    selected_plugin_config = plugins_config['plugins'][index]
+                    plugin_path = selected_plugin_config['path']
+                    # Повторно обнаруживаем плагины, чтобы получить полную информацию
+                    for plugin_info in discover_plugins():
+                        if plugin_info['path'] == plugin_path:
+                            print(Fore.CYAN + "\nИнформация о плагине:")
+                            for key, value in plugin_info.items():
+                                print(f"{key.capitalize()}: {value}")
+                            break
+                    else:
+                        print(Fore.RED + "Информация о плагине не найдена.")
                 else:
                     print(Fore.RED + "Неверный номер плагина.")
             else:
