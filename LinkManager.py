@@ -30,8 +30,8 @@ LINKS_FILENAME = os.path.join(DOCUMENTS_DIR, 'url_links.json')
 SETTINGS_FILENAME = os.path.join(DOCUMENTS_DIR, 'settings.json')
 LOG_FILENAME = os.path.join(DOCUMENTS_DIR, 'link_manager.log')
 STATISTICS_FILENAME = os.path.join(DOCUMENTS_DIR, 'statistics.json')
-PLUGINS_DIR = os.path.join(DOCUMENTS_DIR, 'plugins')
-PLUGIN_CONFIG_FILENAME = os.path.join(DOCUMENTS_DIR, 'plugins_config.json')
+PLUGINS_DIR = os.path.join(DOCUMENTS_DIR, 'plugins') # Теперь папка плагинов внутри DOCUMENTS_DIR
+PLUGIN_CONFIG_FILENAME = os.path.join(PLUGINS_DIR, 'plugins_config.json') # Конфиг тоже там
 
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -93,6 +93,7 @@ def save_plugins_config(config):
 
 def discover_plugins():
     plugins = []
+    os.makedirs(PLUGINS_DIR, exist_ok=True) # Автоматическое создание папки плагинов
     for filename in os.listdir(PLUGINS_DIR):
         if filename.endswith('.py') and filename != 'init.py':
             filepath = os.path.join(PLUGINS_DIR, filename)
@@ -113,14 +114,34 @@ def discover_plugins():
                                 'version': plugin_info.get('version', '0.1'),
                                 'description': plugin_info.get('description', 'Нет описания'),
                                 'author': plugin_info.get('author', 'Неизвестно'),
-                                'status': 'disabled'  
+                                'status': 'disabled'
                             })
-                            break  
+                            break
                 except Exception as e:
                     print(Fore.RED + f"Ошибка при загрузке плагина '{filename}': {e}")
                     logging.error(f"Ошибка при загрузке плагина '{filename}': {e}")
     return plugins
 
+def load_plugins_config():
+    os.makedirs(PLUGINS_DIR, exist_ok=True) # Убеждаемся, что папка существует перед попыткой чтения конфига
+    try:
+        with open(PLUGIN_CONFIG_FILENAME, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                return config
+    except (json.JSONDecodeError, IOError) as e:
+                print(Fore.RED + f"Ошибка загрузки конфигурации плагинов: {e}")
+                logging.error(f"Ошибка загрузки конфигурации плагинов: {e}")
+    return default_plugins_config
+
+def save_plugins_config(config):
+    os.makedirs(PLUGINS_DIR, exist_ok=True) # Убеждаемся, что папка существует перед попыткой записи конфига
+    try:
+        with open(PLUGIN_CONFIG_FILENAME, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+        logging.info("Конфигурация плагинов сохранена.")
+    except IOError as e:
+        print(Fore.RED + f"Ошибка при сохранении конфигурации плагинов: {e}")
+        logging.error(f"Ошибка при сохранении конфигурации плагинов: {e}")
 
 def save_plugins_config(config):
     try:
@@ -1160,3 +1181,9 @@ while True:
 
     else:
         print(Fore.RED + "Неверный ввод. Пожалуйста, попробуйте снова.")
+
+# Инициализация плагинов при запуске
+os.makedirs(PLUGINS_DIR, exist_ok=True) # Убеждаемся, что папка существует при запуске
+plugins_config = load_plugins_config()
+discover_plugins()
+# save_plugins_config(plugins_config) # Сохранение происходит внутри discover_plugins и manage_plugins
