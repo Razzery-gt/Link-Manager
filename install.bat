@@ -7,3 +7,4 @@ pip install pyperclip
 pip install pyyaml
 pip install lxml
 pip install python-docx
+pip install linkmanager-plugin-base
