@@ -897,7 +897,7 @@ def run_debug_functions(links):
         status = "включена" if settings["use_validators"] else "выключена"
         print(f"Проверка через Validators {status}.")
     elif choice == 9:
-        check_for_updates("3.1")
+        check_for_updates("3.1.1")
     elif choice == 10:
         pass
 
@@ -935,10 +935,10 @@ if settings["password_required"]:
         exit()
 
 print(Fore.GREEN + "Добро пожаловать в Link Manager!")
-print(Fore.GREEN + "Версия: 3.1")
+print(Fore.GREEN + "Версия: 3.1.1")
 logging.info("Программа запущена.")
 
-check_for_updates("3.1")
+check_for_updates("3.1.1")
 
 while True:
     print("\nВыберите действие:")
