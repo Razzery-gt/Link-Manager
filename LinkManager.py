@@ -21,7 +21,7 @@ import logging
 import importlib.util
 
 from typing import Dict, Any
-from plugin_base import LinkManagerPlugin
+from linkmanager-plugin-base import LinkManagerPlugin
 
 init(autoreset=True)
 
